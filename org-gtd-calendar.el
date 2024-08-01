@@ -1,104 +1,93 @@
-;;; org-gtd-calendar.el --- Define calendar items in org-gtd -*- lexical-binding: t; coding: utf-8 -*-
-;;
-;; Copyright © 2019-2023 Aldric Giacomoni
+(setq org-gtd-calendared
+      '((metadata . ((ID . org-gtd-id-get-create)
+                     (ORG_GTD . "Calendar")))
+        (definitions . ((properties . ((ORG_GTD_TIMESTAMP . ((type . active-timestamp)
+                                                            (prompt . "Timestamp: ")))))))
+        (views . (engage . ((ORG_GTD_TIMESTAMP . :today))))))
 
-;; Author: Aldric Giacomoni <trevoke@gmail.com>
-;; This file is not part of GNU Emacs.
 
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
+(setq my-inputs
+      '(('string (read-string (format "%s: " prompt)))
+        ('active-timestamp (org-gtd-prompt-for-active-date prompt))
+        ('active-timestamp-with-repeater (org-gtd-prompt-for-date-with-repeater))))
 
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+(setq user-inputs nil)
 
-;; You should have received a copy of the GNU General Public License
-;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
+(defun what-gets-used ()
+  (concat user-inputs my-inputs))
 
-;;; Commentary:
-;;
-;; Calendar items have their own state and logic, defined here.
-;;
-;;; Code:
-
-;;;; Requirements
-
-(require 'org-gtd-refile)
-(require 'org-gtd-clarify)
-
-(declare-function 'org-gtd-organize--call 'org-gtd-organize)
-(declare-function 'org-gtd-organize-apply-hooks 'org-gtd-organize)
-
-;;;; Constants
-
-(defconst org-gtd-calendar "Calendar")
-
-(defconst org-gtd-calendar-func #'org-gtd-calendar--apply
-  "Function called when item at point is a task that must happen on a given day.
-
-Keep this clean and don't load your calendar with things that aren't
-actually appointments or deadlines.")
-
-(defconst org-gtd-calendar-template
-  (format "* Calendar
-:PROPERTIES:
-:ORG_GTD: %s
-:END:
-" org-gtd-calendar))
-
-;;;; Commands
-
-(defun org-gtd-calendar (&optional appointment-date)
-  "Decorate and refile item at point as a calendar item.
-
-You can pass APPOINTMENT-DATE as a YYYY-MM-DD string if you want to use this
-non-interactively."
+(defun org-gtd-prompt-for-property (property-data)
+  "Prompt the user for a value based on PROPERTY-DATA."
   (interactive)
-  (org-gtd-organize--call
-   (apply-partially org-gtd-calendar-func
-                    appointment-date)))
+  (let ((type (alist-get 'type property-data))
+        (prompt (alist-get 'prompt property-data)))
+    (pcase type
+      ('string (read-string (format "%s: " prompt)))
+      ('active-timestamp (org-gtd-prompt-for-active-date prompt))
+      ('active-timestamp-with-repeater (org-gtd-prompt-for-date-with-repeater))
+      (_ (error "%s is not a known property type" type)))))
 
-;;;; Functions
+(defun org-gtd-prompt-for-date-with-repeater ()
+  (interactive)
+  (let ((start-date (org-read-date nil nil nil "When do you want this repeating event to start?"))
+        (repeater (read-from-minibuffer "How do you want this to repeat? ")))
+    (format "<%s %s>" today repeater)))
 
-;;;;; Public
+(defun org-gtd-prompt-for-active-date (prompt)
+  (interactive)
+  (let ((date (org-read-date nil nil nil (format "!! %s !!" prompt))))
+    (format "<%s>" date)))
 
-(defun org-gtd-calendar-create (topic appointment-date)
-  "Automatically create a calendar task in the GTD flow.
+(defun org-gtd-set-property (property-value)
+  (if (functionp property-value)
+      (funcall property-value)
+    property-value))
 
-Takes TOPIC as the string from which to make the heading to add to `org-gtd' and
-APPOINTMENT-DATE as a YYYY-MM-DD string."
-  (let ((buffer (generate-new-buffer "Org GTD programmatic temp buffer"))
-        (org-id-overriding-file-name "org-gtd"))
-    (with-current-buffer buffer
-      (org-mode)
-      (insert (format "* %s" topic))
-      (org-gtd-clarify-item)
-      (org-gtd-calendar appointment-date))
-    (kill-buffer buffer)))
-
-;;;;; Private
-
-(defun org-gtd-calendar--apply (&optional appointment-date)
-  "Add a date/time to this item and store in org gtd.
-
-You can pass APPOINTMENT-DATE as a YYYY-MM-DD string if you want to use this
-non-interactively."
-  (let ((date (or appointment-date
-                  (org-read-date t nil nil "When is this going to happen? "))))
-    (org-entry-put (point) org-gtd-timestamp (format "<%s>" date))
+(defun org-gtd-make-new-heading (action-alist &optional epom)
+  "Create a new org heading with the information from ACTION-ALIST at EPOM."
+  (interactive)
+  (let* ((epom (or epom (org-element-at-point)))
+         (metadata (alist-get 'metadata action-alist))
+         (definitions (alist-get 'definitions action-alist))
+         (properties (alist-get 'properties definitions))
+         (keyword (alist-get 'keyword definitions)))
     (save-excursion
-      (org-end-of-meta-data t)
-      (open-line 1)
-      (insert (format "<%s>" date))))
-  (setq-local org-gtd--organize-type 'calendar)
-  (org-gtd-organize-apply-hooks)
-  (org-gtd-refile--do org-gtd-calendar org-gtd-calendar-template))
+      (goto-char (org-element-property :begin epom))
 
-;;;; Footer
+      (dolist (metadatum metadata)
+        (let ((property-name (symbol-name (car metadatum)))
+              (property-value (cdr metadatum)))
+          (org-set-property property-name (org-gtd-set-property property-value))))
+
+      (dolist (property properties)
+        (let ((property-name (symbol-name (car property)))
+              (property-data (cdr property)))
+          (org-set-property property-name (org-gtd-prompt-for-property property-data))))
+      ;; Set keyword if present
+      (when keyword
+        (org-todo keyword)))))
+
+
+(defun org-gtd-generate-engage-query (alist)
+  "Generate an org-ql query from the provided ALIST.
+NOTE THAT ENGAGE IS HARDCODED RIGHT NOW."
+  (let* ((engage (alist-get 'engage (alist-get 'views alist)))
+         (keyword (cdr (assoc 'keyword alist)))
+        (properties (cdr (assoc 'properties alist))))
+    (delq nil
+          (append
+           '(and)
+           (when keyword
+             `((todo ,keyword)))
+           (mapcar (lambda (property)
+                     (let ((name (symbol-name (car property)))
+                           (value (cdr (assoc 'value (cdr property)))))
+                       (when (and value (member name '("ORG_GTD" "ORG_GTD_TIMESTAMP" "style")))
+                         `(property ,name ,value t))))
+                   properties)))))
+
+;; (org-ql-search (org-agenda-files) (generate-org-ql-query action))
+;; (org-ql-search (org-agenda-files) '(todo "NEXT"))
+;; (org-ql-search (org-agenda-files) '(and (property "ORG_GTD" "Calendar" t)))
 
 (provide 'org-gtd-calendar)
-
-;;; org-gtd-calendar.el ends here

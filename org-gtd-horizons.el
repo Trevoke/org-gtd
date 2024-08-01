@@ -28,8 +28,6 @@
 
 ;;;; Requirements
 
-(require 'org-gtd-files)
-
 ;;;; Customization
 
 (defgroup org-gtd-horizons nil

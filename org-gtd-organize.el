@@ -41,7 +41,6 @@
 (require 'org-gtd-delegate)
 (require 'org-gtd-agenda)
 (require 'org-gtd-projects)
-(require 'org-gtd-refile)
 (require 'org-gtd-process)
 
 ;;;; Customization
@@ -147,8 +146,7 @@ This handles the internal bits of `org-gtd'."
   (when (org-before-first-heading-p)
     (org-next-visible-heading 1))
   (catch 'org-gtd-error
-    (with-org-gtd-context
-        (save-excursion (funcall func)))
+    (save-excursion (funcall func))
     (let ((loop-p (and (boundp org-gtd-clarify--inbox-p) org-gtd-clarify--inbox-p))
           (task-id org-gtd-clarify--clarify-id)
           (window-config org-gtd-clarify--window-config)

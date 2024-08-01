@@ -31,7 +31,6 @@
 (require 'org-gtd-core)
 (require 'org-gtd-single-action)
 (require 'org-gtd-clarify)
-(require 'org-gtd-refile)
 
 (declare-function 'org-gtd-organize--call 'org-gtd-organize)
 (declare-function 'org-gtd-organize-apply-hooks 'org-gtd-organize)
@@ -131,16 +130,17 @@ you."
 
 ;;;;; Private
 
-(defun org-gtd-delegate--apply (&optional delegated-to checkin-date)
+(defun org-gtd-delegate--apply (&optional delegated-to checkin-date rfloc)
   "Organize and refile this as a delegated item in the `org-gtd' system.
 
-You can pass DELEGATED-TO as the name of the person to whom this was delegated
-and CHECKIN-DATE as the YYYY-MM-DD string of when you want `org-gtd' to remind
-you if you want to call this non-interactively."
+Optional DELEGATED-TO as the name of the person to whom this was delegated.
+Optional CHECKIN-DATE as the YYYY-MM-DD string of when you want `org-gtd' to remind
+you.
+Optional RFLOC to refile to a preset position (see `org-refile')."
   (org-gtd-delegate-item-at-point delegated-to checkin-date)
   (setq-local org-gtd--organize-type 'delegated)
   (org-gtd-organize-apply-hooks)
-  (org-gtd-refile--do org-gtd-action org-gtd-action-template))
+  (org-refile nil nil rfloc))
 
 ;;;; Footer
 

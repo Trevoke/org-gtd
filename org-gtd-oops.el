@@ -43,45 +43,44 @@
 (defun org-gtd-oops ()
   "Agenda view for all non-respected timely events."
   (interactive)
-  (with-org-gtd-context
-      (let ((org-agenda-custom-commands
-             '(("o" "Show oopses"
-                ((tags "+DELEGATED_TO={.+}"
-                       ((org-agenda-overriding-header "Missed check-ins on delegated items")
-                        (org-agenda-skip-additional-timestamps-same-entry t)
-                        (org-agenda-skip-function 'org-gtd-skip-unless-timestamp-in-the-past)))
-                 (tags "+ORG_GTD=\"Calendar\"+LEVEL=2"
-                       ((org-agenda-overriding-header "Missed appointments")
-                        (org-agenda-skip-additional-timestamps-same-entry t)
-                        (org-agenda-skip-function
-                         '(org-gtd-skip-AND
-                           '(org-gtd-skip-unless-calendar
-                             org-gtd-skip-unless-timestamp-in-the-past)))))
-                 ;; (tags "+LEVEL=2+ORG_GTD=\"Projects\"+DEADLINE<\"<today>\""
-                 ;;       ((org-agenda-overriding-header "??")))
-                 ;; (tags "+LEVEL=2+ORG_GTD=\"Projects\"+SCHEDULED<\"<today>\""
-                 ;;       ((org-agenda-overriding-header "!!")))
-                 (agenda ""
-                         ((org-agenda-overriding-header "Projects that should have finished")
-                          (org-agenda-entry-types '(:deadline))
-                          (org-agenda-skip-deadline-prewarning-if-scheduled nil)
-                          (org-agenda-include-deadlines t)
-                          (org-deadline-warning-days 0)
-                          (org-agenda-span 1)
-                          (org-agenda-skip-function
-                           'org-gtd-skip-unless-deadline-in-the-past)))
-                 (agenda ""
-                         ((org-agenda-overriding-header "Projects that should have started")
-                          (org-agenda-entry-types '(:scheduled))
-                          (org-agenda-skip-scheduled-delay-if-deadline nil)
-                          (org-agenda-skip-scheduled-if-deadline-is-shown nil)
-                          (org-agenda-span 1)
-                          (org-agenda-skip-function
-                           '(org-gtd-skip-AND
-                             '(org-gtd-skip-if-habit
-                               org-gtd-skip-unless-scheduled-start-in-the-past))))))))))
-        (org-agenda nil "o")
-        (goto-char (point-min)))))
+  (let ((org-agenda-custom-commands
+         '(("o" "Show oopses"
+            ((tags "+DELEGATED_TO={.+}"
+                   ((org-agenda-overriding-header "Missed check-ins on delegated items")
+                    (org-agenda-skip-additional-timestamps-same-entry t)
+                    (org-agenda-skip-function 'org-gtd-skip-unless-timestamp-in-the-past)))
+             (tags "+ORG_GTD=\"Calendar\"+LEVEL=2"
+                   ((org-agenda-overriding-header "Missed appointments")
+                    (org-agenda-skip-additional-timestamps-same-entry t)
+                    (org-agenda-skip-function
+                     '(org-gtd-skip-AND
+                       '(org-gtd-skip-unless-calendar
+                         org-gtd-skip-unless-timestamp-in-the-past)))))
+             ;; (tags "+LEVEL=2+ORG_GTD=\"Projects\"+DEADLINE<\"<today>\""
+             ;;       ((org-agenda-overriding-header "??")))
+             ;; (tags "+LEVEL=2+ORG_GTD=\"Projects\"+SCHEDULED<\"<today>\""
+             ;;       ((org-agenda-overriding-header "!!")))
+             (agenda ""
+                     ((org-agenda-overriding-header "Projects that should have finished")
+                      (org-agenda-entry-types '(:deadline))
+                      (org-agenda-skip-deadline-prewarning-if-scheduled nil)
+                      (org-agenda-include-deadlines t)
+                      (org-deadline-warning-days 0)
+                      (org-agenda-span 1)
+                      (org-agenda-skip-function
+                       'org-gtd-skip-unless-deadline-in-the-past)))
+             (agenda ""
+                     ((org-agenda-overriding-header "Projects that should have started")
+                      (org-agenda-entry-types '(:scheduled))
+                      (org-agenda-skip-scheduled-delay-if-deadline nil)
+                      (org-agenda-skip-scheduled-if-deadline-is-shown nil)
+                      (org-agenda-span 1)
+                      (org-agenda-skip-function
+                       '(org-gtd-skip-AND
+                         '(org-gtd-skip-if-habit
+                           org-gtd-skip-unless-scheduled-start-in-the-past))))))))))
+    (org-agenda nil "o")
+    (goto-char (point-min))))
 
 ;;;; Footer
 

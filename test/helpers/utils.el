@@ -8,9 +8,8 @@
   "Create or return the buffer to the archive file."
   (with-current-buffer (ogt-inbox-buffer)
     (find-file-noselect
-     (car (with-org-gtd-context
-              (org-archive--compute-location
-               (funcall org-gtd-archive-location)))))))
+     (car (org-archive--compute-location
+           (funcall org-gtd-archive-location))))))
 
 (defun ogt--archive-string ()
   "return string of items archived from actionable file"

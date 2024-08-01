@@ -32,7 +32,6 @@
 (require 'org-edna)
 
 (require 'org-gtd-core)
-(require 'org-gtd-refile)
 
 (declare-function 'org-gtd-organize--call 'org-gtd-organize)
 (declare-function 'org-gtd-organize-apply-hooks 'org-gtd-organize)
@@ -89,14 +88,13 @@ This is a list of four items, the same type as in `org-stuck-projects'.")
   "With point on topmost project heading, mark all undone tasks canceled."
   (interactive)
   (org-edna-mode -1)
-  (with-org-gtd-context
-      (org-map-entries
-       (lambda ()
-         (when (org-gtd-projects--incomplete-task-p)
-           (let ((org-inhibit-logging 'note))
-             (org-todo org-gtd-canceled))))
-       nil
-       'tree))
+  (org-map-entries
+   (lambda ()
+     (when (org-gtd-projects--incomplete-task-p)
+       (let ((org-inhibit-logging 'note))
+         (org-todo org-gtd-canceled))))
+   nil
+   'tree)
   (org-edna-mode 1))
 
 ;;;###autoload
@@ -172,7 +170,7 @@ other undone tasks are marked as `org-gtd-todo'."
 
 ;;;;; Private
 
-(defun org-gtd-project-new--apply ()
+(defun org-gtd-project-new--apply (&optional rfloc)
   "Process GTD inbox item by transforming it into a project.
 
 Allow the user apply user-defined tags from `org-tag-persistent-alist',
@@ -193,21 +191,20 @@ Refile to `org-gtd-actionable-file-basename'."
     (org-end-of-line))
   (insert " [/]")
   (org-update-statistics-cookies t)
+  (org-refile nil nil rfloc))
 
-  (org-gtd-refile--do org-gtd-projects org-gtd-projects-template))
-
-(defun org-gtd-project-extend--apply ()
+(defun org-gtd-project-extend--apply (&optional rfloc)
   "Refile the org heading at point under a chosen heading in the agenda files."
-  (with-org-gtd-context
-      (setq-local org-gtd--organize-type 'project-task)
-      (org-gtd-organize-apply-hooks)
+  (setq-local org-gtd--organize-type 'project-task)
+  (org-gtd-organize-apply-hooks)
 
-    (org-gtd-refile--do-project-task)
-    (let ((marker (save-excursion
-                    (org-refile-goto-last-stored)
-                    (org-up-heading-safe)
-                    (point-marker))))
-      (org-gtd-projects-fix-todo-keywords marker))))
+    ;; TODO why do I keep the task.. I think it's my custom housekeeping?
+  (org-refile 3 nil nil "Refile under which project? ")
+  (let ((marker (save-excursion
+                  (org-refile-goto-last-stored)
+                  (org-up-heading-safe)
+                  (point-marker))))
+    (org-gtd-projects-fix-todo-keywords marker)))
 
 (defun org-gtd-projects--apply-organize-hooks-to-tasks ()
   "Decorate tasks for project at point."

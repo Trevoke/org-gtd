@@ -27,7 +27,6 @@
 ;;;; Requirements
 
 (require 'org-gtd-clarify)
-(require 'org-gtd-refile)
 
 (declare-function 'org-gtd-organize--call 'org-gtd-organize)
 (declare-function 'org-gtd-organize-apply-hooks 'org-gtd-organize)
@@ -72,12 +71,12 @@ TOPIC is what you want to see in the agenda view."
 
 ;;;;; Private
 
-(defun org-gtd-single-action--apply ()
+(defun org-gtd-single-action--apply (&optional rfloc)
   "Item at point is a one-off action, ready to be executed."
   (org-todo org-gtd-next)
   (setq-local org-gtd--organize-type 'single-action)
   (org-gtd-organize-apply-hooks)
-  (org-gtd-refile--do org-gtd-action org-gtd-action-template))
+  (org-refile nil nil rfloc))
 
 ;;;; Footer
 

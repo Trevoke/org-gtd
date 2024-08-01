@@ -1,4 +1,4 @@
-;;; org-gtd-incubate.el --- Define incubated items in org-gtd -*- lexical-binding: t; coding: utf-8 -*-
+;;; org-gtd-calendar.el --- Define calendar items in org-gtd -*- lexical-binding: t; coding: utf-8 -*-
 ;;
 ;; Copyright © 2019-2023 Aldric Giacomoni
 
@@ -20,7 +20,7 @@
 
 ;;; Commentary:
 ;;
-;; Incubated items have their own logic, defined here
+;; Calendar items have their own state and logic, defined here.
 ;;
 ;;; Code:
 
@@ -33,69 +33,71 @@
 
 ;;;; Constants
 
-(defconst org-gtd-incubate "Incubated")
+(defconst org-gtd-calendar "Calendar")
 
-(defconst org-gtd-incubate-func #'org-gtd-incubate--apply
-  "Function called when organizing item as incubated.")
+(defconst org-gtd-calendar-func #'org-gtd-calendar--apply
+  "Function called when item at point is a task that must happen on a given day.
 
-(defconst org-gtd-incubate-template
-  (format "* Incubate
+Keep this clean and don't load your calendar with things that aren't
+actually appointments or deadlines.")
+
+(defconst org-gtd-calendar-template
+  (format "* Calendar
 :PROPERTIES:
 :ORG_GTD: %s
 :END:
-" org-gtd-incubate)
-  "Template for the GTD someday/maybe list.")
+" org-gtd-calendar))
 
 ;;;; Commands
 
-(defun org-gtd-incubate (&optional reminder-date)
-  "Decorate, organize and refile item at point as incubated.
+(defun org-gtd-calendar (&optional appointment-date)
+  "Decorate and refile item at point as a calendar item.
 
-If you want to call this non-interactively,
-REMINDER-DATE is the YYYY-MM-DD string for when you want this to come up again."
+You can pass APPOINTMENT-DATE as a YYYY-MM-DD string if you want to use this
+non-interactively."
   (interactive)
   (org-gtd-organize--call
-   (apply-partially org-gtd-incubate-func
-                    reminder-date)))
+   (apply-partially org-gtd-calendar-func
+                    appointment-date)))
 
 ;;;; Functions
 
 ;;;;; Public
 
-(defun org-gtd-incubate-create (topic reminder-date)
-  "Automatically create a delegated task in the GTD flow.
+(defun org-gtd-calendar-create (topic appointment-date)
+  "Automatically create a calendar task in the GTD flow.
 
-TOPIC is the string you want to see in the `org-agenda' view.
-REMINDER-DATE is the YYYY-MM-DD string for when you want this to come up again."
+Takes TOPIC as the string from which to make the heading to add to `org-gtd' and
+APPOINTMENT-DATE as a YYYY-MM-DD string."
   (let ((buffer (generate-new-buffer "Org GTD programmatic temp buffer"))
         (org-id-overriding-file-name "org-gtd"))
     (with-current-buffer buffer
       (org-mode)
       (insert (format "* %s" topic))
       (org-gtd-clarify-item)
-      (org-gtd-incubate reminder-date))
+      (org-gtd-calendar appointment-date))
     (kill-buffer buffer)))
 
 ;;;;; Private
 
-(defun org-gtd-incubate--apply (&optional reminder-date rfloc)
-  "Incubate this item through org-gtd.
+(defun org-gtd-calendar--apply (&optional appointment-date rfloc)
+  "Add a date/time to this item and store in org gtd.
 
-If you want to call this non-interactively,
-REMINDER-DATE is the YYYY-MM-DD string for when you want this to come up again."
-  (let ((date (or reminder-date
-                  (org-read-date t nil nil "When would you like this item to come up again? "))))
+You can pass APPOINTMENT-DATE as a YYYY-MM-DD string if you want to use this
+non-interactively."
+  (let ((date (or appointment-date
+                  (org-read-date t nil nil "When is this going to happen? "))))
     (org-entry-put (point) org-gtd-timestamp (format "<%s>" date))
     (save-excursion
       (org-end-of-meta-data t)
       (open-line 1)
       (insert (format "<%s>" date))))
-  (setq-local org-gtd--organize-type 'incubated)
+  (setq-local org-gtd--organize-type 'calendar)
   (org-gtd-organize-apply-hooks)
   (org-refile nil nil rfloc))
 
 ;;;; Footer
 
-(provide 'org-gtd-incubate)
+(provide 'org-gtd-calendar)
 
-;;; org-gtd-incubate.el ends here
+;;; org-gtd-calendar.el ends here

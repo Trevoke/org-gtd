@@ -15,10 +15,9 @@
 
  (it "appends to the existing org-agenda-files"
      (let ((org-agenda-files '("/tmp/foo.org")))
-       (with-org-gtd-context
-           (expect org-agenda-files
-                   :to-have-same-items-as
-                   `(,org-gtd-directory "/tmp/foo.org")))))
+       (expect org-agenda-files
+               :to-have-same-items-as
+               `(,org-gtd-directory "/tmp/foo.org"))))
 
  (it "expands and appends if org-agenda-files is a single file"
      (let* ((other-dir (make-temp-file "other-dir" t))
@@ -29,16 +28,13 @@
        (with-current-buffer index (basic-save-buffer))
 
        (let ((org-agenda-files (buffer-file-name index)))
-         (with-org-gtd-context
-             (expect org-agenda-files
-                     :to-have-same-items-as
-                     `(,org-gtd-directory ,(f-join other-dir "file1.org")))))
+         (expect org-agenda-files
+                 :to-have-same-items-as
+                 `(,org-gtd-directory ,(f-join other-dir "file1.org"))))
        (kill-buffer index)))
 
  (it "sets the variable if org-agenda-files is nil"
      (let ((org-agenda-files nil))
-       (with-org-gtd-context
-           (expect org-agenda-files
-                   :to-have-same-items-as
-                   `(,org-gtd-directory)))))
-)
+       (expect org-agenda-files
+               :to-have-same-items-as
+               `(,org-gtd-directory)))))

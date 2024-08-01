@@ -51,53 +51,47 @@ This is where the project name is displayed, on the left side."
 (defun org-gtd-engage ()
   "Display `org-agenda' customized by org-gtd."
   (interactive)
-  (org-gtd-core-prepare-agenda-buffers)
-  (with-org-gtd-context
-      (let* ((project-format-prefix
-              (format " %%i %%-%d:(org-gtd-agenda--prefix-format) "
-                      org-gtd-engage-prefix-width))
-             (org-agenda-custom-commands
-             `(("g" "Scheduled today and all NEXT items"
-                ((agenda ""
-                         ((org-agenda-span 1)
-                          (org-agenda-start-day nil)
-                          (org-agenda-skip-additional-timestamps-same-entry t)))
-                 (todo org-gtd-next
-                       ((org-agenda-overriding-header "All actions ready to be executed.")
-                        (org-agenda-prefix-format
-                         '((todo . ,project-format-prefix))))))))))
-        (org-agenda nil "g")
-        (goto-char (point-min)))))
+  (let* ((project-format-prefix
+          (format " %%i %%-%d:(org-gtd-agenda--prefix-format) "
+                  org-gtd-engage-prefix-width))
+         (org-agenda-custom-commands
+          `(("g" "Scheduled today and all NEXT items"
+             ((agenda ""
+                      ((org-agenda-span 1)
+                       (org-agenda-start-day nil)
+                       (org-agenda-skip-additional-timestamps-same-entry t)))
+              (todo org-gtd-next
+                    ((org-agenda-overriding-header "All actions ready to be executed.")
+                     (org-agenda-prefix-format
+                      '((todo . ,project-format-prefix))))))))))
+    (org-agenda nil "g")
+    (goto-char (point-min))))
 
 ;;;###autoload
 (defun org-gtd-engage-grouped-by-context ()
   "Show all `org-gtd-next' actions grouped by context (tag prefixed with @)."
   (interactive)
-  (org-gtd-core-prepare-agenda-buffers)
-  (with-org-gtd-context
-      (let* ((contexts (seq-map
-                        (lambda (x) (substring-no-properties x))
-                        (seq-uniq
-                         (flatten-list
-                          (org-map-entries
-                           (lambda () org-scanner-tags)
-                           (format "{^@}+TODO=\"%s\"" org-gtd-next)
-                           'agenda)))))
-             (blocks (seq-map
-                      (lambda (x) `(tags ,(format "+%s+TODO=\"%s\"" x org-gtd-next)
-                                         ((org-agenda-overriding-header ,x))))
-                      contexts))
-             (org-agenda-custom-commands `(("g" "actions by context" ,blocks))))
-        (org-agenda nil "g"))))
+  (let* ((contexts (seq-map
+                    (lambda (x) (substring-no-properties x))
+                    (seq-uniq
+                     (flatten-list
+                      (org-map-entries
+                       (lambda () org-scanner-tags)
+                       (format "{^@}+TODO=\"%s\"" org-gtd-next)
+                       'agenda)))))
+         (blocks (seq-map
+                  (lambda (x) `(tags ,(format "+%s+TODO=\"%s\"" x org-gtd-next)
+                                     ((org-agenda-overriding-header ,x))))
+                  contexts))
+         (org-agenda-custom-commands `(("g" "actions by context" ,blocks))))
+    (org-agenda nil "g")))
 
 ;;;###autoload
 (defun org-gtd-show-all-next ()
   "Show all next actions from all agenda files in a single list.
 This assumes all GTD files are also agenda files."
   (interactive)
-  (org-gtd-core-prepare-agenda-buffers)
-  (with-org-gtd-context
-      (org-todo-list org-gtd-next)))
+  (org-todo-list org-gtd-next))
 
 ;;;; Functions
 

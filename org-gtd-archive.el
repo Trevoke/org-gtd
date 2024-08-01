@@ -68,9 +68,7 @@ into a datetree."
 (defun org-gtd-archive-completed-items ()
   "Archive everything that needs to be archived in your org-gtd."
   (interactive)
-  (org-gtd-core-prepare-agenda-buffers)
-  (with-org-gtd-context
-      (org-gtd--archive-complete-projects)
+  (org-gtd--archive-complete-projects)
       (org-map-entries #'org-gtd--archive-completed-actions
                        "+LEVEL=2&+ORG_GTD=\"Actions\""
                        'agenda)
@@ -79,7 +77,8 @@ into a datetree."
                      'agenda)
     (org-map-entries #'org-gtd--archive-completed-actions
                      "+LEVEL=2&+ORG_GTD=\"Incubated\""
-                     'agenda)))
+                     'agenda)
+  )
 
 (defun org-gtd-archive-item-at-point ()
   "Dirty hack to force archiving where I know I can."
@@ -93,22 +92,12 @@ into a datetree."
       (with-current-buffer buffer
         (org-paste-subtree)
         (goto-char (point-min))
-        (with-org-gtd-context (org-archive-subtree))
+        (org-archive-subtree)
         (basic-save-buffer)
         (kill-buffer))
       (delete-file temp-file))))
 
 ;;;; Functions
-
-;;;;; Public
-
-(defun org-gtd-archive-location-func ()
-  "Default function to define where to archive items."
-  (let* ((year (number-to-string (caddr (calendar-current-date))))
-         (full-org-gtd-path (expand-file-name org-gtd-directory))
-         (filename (format org-gtd-archive-file-format year))
-         (filepath (f-join full-org-gtd-path filename)))
-    (string-join `(,filepath "::" "datetree/"))))
 
 ;;;;; Private
 

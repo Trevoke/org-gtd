@@ -28,7 +28,6 @@
 
 (require 'org-gtd-core)
 (require 'org-gtd-clarify)
-(require 'org-gtd-refile)
 
 (declare-function 'org-gtd-organize--call 'org-gtd-organize)
 (declare-function 'org-gtd-organize-apply-hooks 'org-gtd-organize)
@@ -55,6 +54,7 @@
 If you want to call this non-interactively,
 REPEATER is `org-mode'-style repeater string (.e.g \".+3d\") which will
 determine how often you'll be reminded of this habit."
+  (declare (modes org-gtd-organize-mode)) ;; for 27.2 compatibility
   (interactive)
   (org-gtd-organize--call
    (apply-partially org-gtd-habit-func
@@ -81,7 +81,7 @@ determine how often you'll be reminded of this habit."
 
 ;;;;; Private
 
-(defun org-gtd-habit--apply (&optional repeater)
+(defun org-gtd-habit--apply (&optional repeater rfloc)
   "Add a repeater to this item and store in org gtd.
 
 If you want to call this non-interactively,
@@ -94,7 +94,7 @@ determine how often you'll be reminded of this habit."
     (org-entry-put (point) "STYLE" "habit"))
   (setq-local org-gtd--organize-type 'habit)
   (org-gtd-organize-apply-hooks)
-  (org-gtd-refile--do org-gtd-habit org-gtd-habit-template))
+  (org-refile nil nil rfloc))
 
 ;;;; Footer
 
